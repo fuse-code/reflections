@@ -1,6 +1,6 @@
 package org.reflections;
 
-import org.reflections.scanners.Scanner;
+import static org.reflections.util.Utils.index;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static org.reflections.util.Utils.index;
+import org.reflections.scanners.Scanner;
 
 /**
  * stores metadata information in multimaps
@@ -33,12 +33,17 @@ public class Store {
         }
     }
 
-    /** return all indices */
+    /**
+     * return all indices
+     */
     public Set<String> keySet() {
         return storeMap.keySet();
     }
 
-    /** get the multimap object for the given {@code index}, otherwise throws a {@link org.reflections.ReflectionsException} */
+    /**
+     * get the multimap object for the given {@code index}, otherwise throws a {@link
+     * org.reflections.ReflectionsException}
+     */
     private Map<String, Collection<String>> get(String index) {
         Map<String, Collection<String>> mmap = storeMap.get(index);
         if (mmap == null) {
@@ -47,22 +52,44 @@ public class Store {
         return mmap;
     }
 
-    /** get the values stored for the given {@code index} and {@code keys} */
+    /**
+     * get the values stored for the given {@code index} and {@code keys}
+     */
+    public Set<String> findValuesByFilter(Class<?> scannerClass, Predicate<String> filter) {
+        Map<String, Collection<String>> mmap = get(index(scannerClass));
+        Set<String> result = new LinkedHashSet<>();
+        for (Map.Entry<String, Collection<String>> entry : mmap.entrySet()) {
+            if (filter.test(entry.getKey())) {
+                result.addAll(entry.getValue());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * get the values stored for the given {@code index} and {@code keys}
+     */
     public Set<String> get(Class<?> scannerClass, String key) {
         return get(index(scannerClass), Collections.singletonList(key));
     }
 
-    /** get the values stored for the given {@code index} and {@code keys} */
+    /**
+     * get the values stored for the given {@code index} and {@code keys}
+     */
     public Set<String> get(String index, String key) {
         return get(index, Collections.singletonList(key));
     }
 
-    /** get the values stored for the given {@code index} and {@code keys} */
+    /**
+     * get the values stored for the given {@code index} and {@code keys}
+     */
     public Set<String> get(Class<?> scannerClass, Collection<String> keys) {
         return get(index(scannerClass), keys);
     }
 
-    /** get the values stored for the given {@code index} and {@code keys} */
+    /**
+     * get the values stored for the given {@code index} and {@code keys}
+     */
     private Set<String> get(String index, Collection<String> keys) {
         Map<String, Collection<String>> mmap = get(index);
         Set<String> result = new LinkedHashSet<>();
